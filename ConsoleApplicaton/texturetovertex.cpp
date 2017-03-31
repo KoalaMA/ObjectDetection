@@ -100,13 +100,15 @@ void TriangleIndexVisitor::MapMatrix(const int index1, const int index2, const i
 
 void TriangleIndexVisitor::CreateBinaryImage()
 {
-  cv::Mat TextImage(texImg_->t(),texImg_->s(),CV_8UC3);
-  for(int wide_index = 0 ;wide_index < texImg_->s() ; wide_index++)// rows
+  cv::Mat TextImage(texImg_->s(),texImg_->t(),CV_8UC3);
+  for(int wide_index = 0 ;wide_index < texImg_->t() ; wide_index++)// rows
     {
-      for(int height_index = 0 ;height_index < texImg_->t() ; height_index++) //cols
+      for(int height_index = 0 ;height_index < texImg_->s() ; height_index++) //cols
         {
-//          int row_num = texImg_->t();
-//          int col_num = texImg_->s();
+
+          int x = texImg_->s();
+          int y = texImg_->t();
+
           osg::Vec4 pixel_info = texImg_->getColor(wide_index,height_index,0);
           TextImage.at<cv::Vec3b>(wide_index,height_index)[0] = floor(pixel_info[0]*255);
           TextImage.at<cv::Vec3b>(wide_index,height_index)[1] = floor(pixel_info[1]*255);
@@ -461,7 +463,7 @@ void TriangleIndexVisitor::TraverseBinaryImage(int x_index, int y_index,MYSQL_RO
 
         string sql = "insert into "+lines_table_name+" values('"+ConvertToString(pixel_count)+"','"+ConvertToString(current_pixel.x()) +"','"+ConvertToString(current_pixel.y())+"','"+ConvertToString(s_point_x)+"','"+ConvertToString(s_point_y)+"','"+ConvertToString(s_point_z)+"');";
         int p = mysql_query(mysql_add.connection,sql.c_str());//insert matrix into table
-        cout<<"let me know it"<<endl;
+//        cout<<"let me know it"<<endl;
         pixel_count ++;
         BinaryImage.at<cv::Vec3b>(x_index,y_index)[0] == 0;
       }
@@ -559,7 +561,7 @@ void FindGeometryVisitor::apply(osg::Group &group)
             getImage(geode);//getting image behind computing convert_matrix
 
           }
-        break;
+//        break;
 
       }
 

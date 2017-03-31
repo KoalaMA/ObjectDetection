@@ -30,7 +30,7 @@ void OSG::run()
             group->addChild(node.get());
 
 
-            break;
+//            break;
             if (index >= 600)
               {
                 break;
