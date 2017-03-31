@@ -53,22 +53,22 @@ class TriangleIndexVisitor
 public:
     int count;
     int temp_id;
-    bool find_map_matrix;
     int pixel_count;
 
     string matrixes_table_name;
     string lines_table_name;
 
-//    cv::Mat GrayImage;
+//    cv::Mat BinaryImage;
     //vector<int> aryindex;//三角面片顶点索引数组
     osg::Array* arytexcoord;
     osg::Array* aryvercoord;
     osg::Image* texImg_;
     IndexToTextureCoord textureCoord;
     cv::Mat GrayImage;
+    cv::Mat BinaryImage;
     std::vector<osg::Vec3> point_set;
 
-    MYSQL_FIELD *field;
+//    MYSQL_FIELD *field;
     MYSQL_RES* result;
     MYSQL_ROW row;
 
@@ -80,6 +80,8 @@ public:
 
     SidesManage* sideManage;
 
+    std::vector<cv::Vec4i> lines;
+
 public:
     TriangleIndexVisitor();
 
@@ -89,15 +91,27 @@ public:
 
     void operator()(const int index1, const int index2, const int index3);
 
+    void TestFunction();
+
     void MapToSpatialCoordinate();
+
+    void MapToSpatialCoordinate2();
+
+    void TraverseBinaryImage(int x_index, int y_index, MYSQL_ROW row);
 
     void MapMatrix(const int index1, const int index2, const int index3);
 
     void CreateBinaryImage();
 
+    void FilterPixels(cv::Mat GrayImage);
+
     string ConvertToString(float Num);
 
     void ClearAllTheRecords();
+
+    void HoughLines();
+
+
 
 };
 
@@ -119,3 +133,33 @@ public:
 };
 
 
+class LineFinder
+{
+private:
+    cv::Mat img; // original image
+    std::vector<cv::Vec4i> lines;
+    double deltaRho;
+    double deltaTheta;
+    int minVote;
+
+    double minLength; // min length for a line
+    double maxGap; // max allowed gap along the line
+public:
+    // Default accumulator resolution is 1 pixel by 1 degree
+    // no gap, no mimimum length
+    LineFinder() : deltaRho(1),
+        deltaTheta(CV_PI/180),
+        minVote(10),
+        minLength(0.),
+        maxGap(0.) {}
+    // Set the resolution of the accumulator
+    void setAccResolution(double dRho, double dTheta);
+    // Set the minimum number of votes
+    void setMinVote(int minv);
+    // Set line length and gap
+    void setLineLengthAndGap(double length, double gap);
+    // Apply probabilistic Hough Transform
+    std::vector<cv::Vec4i> findLines(cv::Mat& binary);
+    // Draw the detected lines on an image
+    void drawDetectedLines(cv::Mat &image, cv::Scalar color = cv::Scalar(255, 255, 255));
+};

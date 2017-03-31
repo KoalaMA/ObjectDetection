@@ -7,10 +7,10 @@ float IndexToTextureCoord::getRowTexCoord(int col_index, int S)
     return tx;
 }
 
-float IndexToTextureCoord::getColuTexCoord(int row_index,int T)
+float IndexToTextureCoord::getColuTexCoord(int y_index,int T)
 {
     float ty;
-    ty = (float)(row_index+1)/T;
+    ty = (float)(y_index+1)/T;
     return ty;
 }
 
@@ -18,11 +18,8 @@ TriangleIndexVisitor::TriangleIndexVisitor()
 {  
   mysql_add.initDB("localhost" , "root", "shilei744534" , "convert_matrix" );  
   temp_id = 0;
-  find_map_matrix = false;
   pixel_count = 0;
-//  mysql_add.executeSQL("select * from matrix_info;");
   count = 0;
-
 }
 
 TriangleIndexVisitor::~TriangleIndexVisitor()
@@ -111,71 +108,215 @@ void TriangleIndexVisitor::CreateBinaryImage()
 //          int row_num = texImg_->t();
 //          int col_num = texImg_->s();
           osg::Vec4 pixel_info = texImg_->getColor(wide_index,height_index,0);
-          TextImage.at<cv::Vec3b>(height_index,wide_index)[0] = floor(pixel_info[0]*255);
-          TextImage.at<cv::Vec3b>(height_index,wide_index)[1] = floor(pixel_info[1]*255);
-          TextImage.at<cv::Vec3b>(height_index,wide_index)[2] = floor(pixel_info[2]*255);
+          TextImage.at<cv::Vec3b>(wide_index,height_index)[0] = floor(pixel_info[0]*255);
+          TextImage.at<cv::Vec3b>(wide_index,height_index)[1] = floor(pixel_info[1]*255);
+          TextImage.at<cv::Vec3b>(wide_index,height_index)[2] = floor(pixel_info[2]*255);
         }
     }
 
 
   cvtColor(TextImage,GrayImage,CV_RGB2GRAY);
-  Canny(GrayImage,GrayImage,500,300,3,true);
+  Canny(GrayImage,BinaryImage,500,200,3,true);
 
-//  imshow("TextImage",TextImage);
-//  cvWaitKey(0);
-
-//  imshow("GrayImage",GrayImage);
-//  cvWaitKey(0);
-  MapToSpatialCoordinate();
+  FilterPixels(GrayImage);
+  imshow("BinaryImage",BinaryImage);
+  cvWaitKey(0);
+//  HoughLines();
+//  MapToSpatialCoordinate();
+  MapToSpatialCoordinate2();
+//  TestFunction();
   sideManage->DrawSidesOnSpatialModel();//draw sides
 
-//  ClearAllTheRecords();
+}
+
+void TriangleIndexVisitor::FilterPixels(cv::Mat GrayImage)//filter pixels
+{
+  for(int x_index = 0;x_index < BinaryImage.cols;x_index ++)
+    {
+      for(int y_index = 0;y_index < BinaryImage.rows;y_index ++)
+        {
+          int temp_count = 0;
+          if(BinaryImage.at<cv::Vec3b>(x_index,y_index)[0] == 255)//we also need to judge that if it locates in current region
+            {
+              if(x_index == 0 || y_index == 0 || x_index == BinaryImage.cols - 1 || y_index == BinaryImage.rows - 1)
+                {
+                  temp_count++;
+                }
+              else {
+//                      imshow("BinaryImage",BinaryImage);
+//                      cvWaitKey(0);
+
+                      if(GrayImage.at<cv::Vec3b>(x_index - 1,y_index -  1)[0]  == 0 && GrayImage.at<cv::Vec3b>(x_index - 1,y_index -  1)[1]  == 0 && GrayImage.at<cv::Vec3b>(x_index - 1,y_index -  1)[2]  == 0  )
+                        {
+                          temp_count++;
+                        }
+
+                      if(GrayImage.at<cv::Vec3b>(x_index,y_index -  1)[0]  == 0 && GrayImage.at<cv::Vec3b>(x_index,y_index -  1)[1]  == 0 && GrayImage.at<cv::Vec3b>(x_index,y_index -  1)[2]  == 0  )
+                        {
+                          temp_count++;
+                        }
+
+                      if(GrayImage.at<cv::Vec3b>(x_index + 1,y_index -  1)[0]  == 0 && GrayImage.at<cv::Vec3b>(x_index + 1,y_index -  1)[1]  == 0 && GrayImage.at<cv::Vec3b>(x_index + 1,y_index -  1)[2]  == 0  )
+                        {
+                          temp_count++;
+                        }
+
+                      if(GrayImage.at<cv::Vec3b>(x_index - 1,y_index)[0]  == 0 && GrayImage.at<cv::Vec3b>(x_index - 1,y_index)[1]  == 0 && GrayImage.at<cv::Vec3b>(x_index - 1,y_index)[2]  == 0  )
+                        {
+                          temp_count++;
+                        }
+
+                      if(GrayImage.at<cv::Vec3b>(x_index + 1,y_index)[0]  == 0 && GrayImage.at<cv::Vec3b>(x_index + 1,y_index)[1]  == 0 && GrayImage.at<cv::Vec3b>(x_index + 1,y_index)[2]  == 0  )
+                        {
+                          temp_count++;
+                        }
+
+                      if(GrayImage.at<cv::Vec3b>(x_index - 1,y_index +  1)[0]  == 0 && GrayImage.at<cv::Vec3b>(x_index - 1,y_index +  1)[1]  == 0 && GrayImage.at<cv::Vec3b>(x_index - 1,y_index +  1)[2]  == 0  )
+                        {
+                          temp_count++;
+                        }
+
+                      if(GrayImage.at<cv::Vec3b>(x_index,y_index +  1)[0]  == 0 && GrayImage.at<cv::Vec3b>(x_index,y_index +  1)[1]  == 0 && GrayImage.at<cv::Vec3b>(x_index,y_index +  1)[2]  == 0  )
+                        {
+                          temp_count++;
+                        }
+
+                      if(GrayImage.at<cv::Vec3b>(x_index + 1,y_index +  1)[0]  == 0 && GrayImage.at<cv::Vec3b>(x_index + 1,y_index +  1)[1]  == 0 && GrayImage.at<cv::Vec3b>(x_index + 1,y_index +  1)[2]  == 0  )
+                        {
+                          temp_count++;
+                        }
+
+                }
+
+              if(temp_count > 0)
+                {
+                  BinaryImage.at<cv::Vec3b>(x_index,y_index)[0] = 0;
+                }
+
+            }
+        }
+    }
+
+}
+
+void TriangleIndexVisitor::TestFunction()
+{
+  osg::Vec2 current_pixel;
+  current_pixel.x() = 800;//column
+  current_pixel.y() = 900;//row
+  while (temp_id < count){
+      string sql = "select t_point1_x,t_point1_y,t_point2_x,t_point2_y,t_point3_x,t_point3_y,a11,a12,a13,a21,a22,a23,a31,a32,a33 from "+matrixes_table_name+" where id ="+ConvertToString(temp_id)+";";
+      //visit matrix_info
+      if(mysql_query(mysql_add.connection,sql.c_str()))//successful queried
+        {
+          result = mysql_store_result(mysql_add.connection);
+          row = mysql_fetch_row(result);//it is managed as a two dimensions array;
+//          field = mysql_fetch_field(result);
+
+          float t_point1_x = atof(row[0])*BinaryImage.cols - 1;
+          float t_point1_y = atof(row[1])*BinaryImage.rows - 1;
+          float t_point2_x = atof(row[2])*BinaryImage.cols - 1;
+          float t_point2_y = atof(row[3])*BinaryImage.rows - 1;
+          float t_point3_x = atof(row[4])*BinaryImage.cols - 1;
+          float t_point3_y = atof(row[5])*BinaryImage.rows - 1;
+
+          float a11 = atof(row[6]);
+          float a12 = atof(row[7]);
+//          float a13 = atof(row[8]);
+          float a21 = atof(row[9]);
+          float a22 = atof(row[10]);
+//          float a23 = atof(row[11]);
+          float a31 = atof(row[12]);
+          float a32 = atof(row[13]);
+//          float a33 = atof(row[14]);
+
+          osg::Vec2 point1,point2,point3,vec1,vec2,vec3;
+          point1.x() = t_point1_x;
+          point1.y() = t_point1_y;
+          point2.x() = t_point2_x;
+          point2.y() = t_point2_y;
+          point3.x() = t_point3_x;
+          point3.y() = t_point3_y;
+
+          vec1 = point1 - current_pixel;
+          vec1.normalize();//mormalize the vector
+          vec2 = point2 - current_pixel;
+          vec2.normalize();
+          vec3 = point3 - current_pixel;
+          vec3.normalize();
+
+          float value = abs(acosf((vec1) * (vec2)) + acosf((vec1) * (vec3)) + acosf((vec2) * (vec3)) - 2 * osg::PI) ;
+          if (abs(acosf((vec1) * (vec2)) + acosf((vec1) * (vec3)) + acosf((vec2) * (vec3)) - 2 * osg::PI) < 1e-2)//current_pixel is located in current triangle
+            {
+              cout<<"let me know it"<<endl;
+
+              osg::Vec2 texture_pixel;
+              // convert to texture coordinates
+              texture_pixel.x() = (float)(800+1)/BinaryImage.cols;
+              texture_pixel.y() = (float)(900+1)/BinaryImage.rows;
+
+              float s_point_x = a11*texture_pixel.x() + a12*texture_pixel.y();
+              float s_point_y = a21*texture_pixel.x() + a22*texture_pixel.y();
+              float s_point_z = a31*texture_pixel.x() + a32*texture_pixel.y();
+
+              string sql = "insert into "+lines_table_name+" values('"+ConvertToString(pixel_count)+"','"+ConvertToString(current_pixel.x()) +"','"+ConvertToString(current_pixel.y())+"','"+ConvertToString(s_point_x)+"','"+ConvertToString(s_point_y)+"','"+ConvertToString(s_point_z)+"');";
+              mysql_query(mysql_add.connection,sql.c_str());//insert matrix into table
+
+              temp_id++;
+            }
+          else {
+              temp_id++;
+            }
+
+        }
+
+
+    }
+
+
 }
 
 void TriangleIndexVisitor::MapToSpatialCoordinate()
 {
 //  find those white pixels
-  for(int col_index = 0;col_index < GrayImage.cols;col_index ++)
+  for(int x_index = 0;x_index < BinaryImage.cols;x_index ++)
     {
-      for(int row_index = 0;row_index < GrayImage.rows;row_index ++)
+      for(int y_index = 0;y_index < BinaryImage.rows;y_index ++)
         {
-          if(GrayImage.at<cv::Vec3b>(col_index,row_index)[0] == 255)//we also need to judge that if it locates in current region
+          if(BinaryImage.at<cv::Vec3b>(x_index,y_index)[0] == 255)//we also need to judge that if it locates in current region
             {
               osg::Vec2 current_pixel;
-              current_pixel.x() = col_index;
-              current_pixel.y() = row_index;
-
-//              current_pixel.x() = 895;
-//              current_pixel.y() = 408;
-
-
+              current_pixel.x() = x_index;
+              current_pixel.y() = y_index;
+//              current_pixel.x() = 800;
+//              current_pixel.y() = 900;
 
               // find the location of current_pixel,tranverse all the records in table matrix_info
-              while (!find_map_matrix && temp_id < count) {
+              while (temp_id < count) {
                   string sql = "select t_point1_x,t_point1_y,t_point2_x,t_point2_y,t_point3_x,t_point3_y,a11,a12,a13,a21,a22,a23,a31,a32,a33 from "+matrixes_table_name+" where id ="+ConvertToString(temp_id)+";";
                   //visit matrix_info
                   if(mysql_query(mysql_add.connection,sql.c_str()))//successful queried
                     {
                       result = mysql_store_result(mysql_add.connection);
                       row = mysql_fetch_row(result);//it is managed as a two dimensions array;
-                      field = mysql_fetch_field(result);
+//                      field = mysql_fetch_field(result);
 
-                      float t_point1_x = atof(row[0])*GrayImage.cols - 1;
-                      float t_point1_y = atof(row[1])*GrayImage.rows - 1;
-                      float t_point2_x = atof(row[2])*GrayImage.cols - 1;
-                      float t_point2_y = atof(row[3])*GrayImage.rows - 1;
-                      float t_point3_x = atof(row[4])*GrayImage.cols - 1;
-                      float t_point3_y = atof(row[5])*GrayImage.rows - 1;
+                      float t_point1_x = atof(row[0])*BinaryImage.cols - 1;
+                      float t_point1_y = atof(row[1])*BinaryImage.rows - 1;
+                      float t_point2_x = atof(row[2])*BinaryImage.cols - 1;
+                      float t_point2_y = atof(row[3])*BinaryImage.rows - 1;
+                      float t_point3_x = atof(row[4])*BinaryImage.cols - 1;
+                      float t_point3_y = atof(row[5])*BinaryImage.rows - 1;
 
                       float a11 = atof(row[6]);
                       float a12 = atof(row[7]);
-                      float a13 = atof(row[8]);
+//                      float a13 = atof(row[8]);
                       float a21 = atof(row[9]);
                       float a22 = atof(row[10]);
-                      float a23 = atof(row[11]);
+//                      float a23 = atof(row[11]);
                       float a31 = atof(row[12]);
                       float a32 = atof(row[13]);
-                      float a33 = atof(row[14]);
+//                      float a33 = atof(row[14]);
 
                       osg::Vec2 point1,point2,point3,vec1,vec2,vec3;
                       point1.x() = t_point1_x;
@@ -192,24 +333,26 @@ void TriangleIndexVisitor::MapToSpatialCoordinate()
                       vec3 = point3 - current_pixel;
                       vec3.normalize();
 
-                      if (abs(acosf((vec1) * (vec2)) + acosf((vec1) * (vec3)) + acosf((vec2) * (vec3)) - 2 * osg::PI) < 10/*1e-2*/)//current_pixel is located in current triangle
+//                      float value = abs(acosf((vec1) * (vec2)) + acosf((vec1) * (vec3)) + acosf((vec2) * (vec3)) - 2 * osg::PI) ;
+                      if (abs(acosf((vec1) * (vec2)) + acosf((vec1) * (vec3)) + acosf((vec2) * (vec3)) - 2 * osg::PI) < 1e-2)//current_pixel is located in current triangle
                         {
                           osg::Vec2 texture_pixel;
                           // convert to texture coordinates
-                          texture_pixel.x() = (float)(col_index+1)/GrayImage.cols;
-                          texture_pixel.y() = (float)(row_index+1)/GrayImage.rows;
+//                          texture_pixel.x() = (float)(800+1)/BinaryImage.cols;
+//                          texture_pixel.y() = (float)(900+1)/BinaryImage.rows;
 
-//                          texture_pixel.x() = (float)(895+1)/GrayImage.cols;
-//                          texture_pixel.y() = (float)(408+1)/GrayImage.rows;
+
+                          cout<<"let me know it"<<endl;
+                          texture_pixel.x() = (float)(x_index+1)/BinaryImage.cols;
+                          texture_pixel.y() = (float)(y_index+1)/BinaryImage.rows;
 
                           float s_point_x = a11*texture_pixel.x() + a12*texture_pixel.y();
                           float s_point_y = a21*texture_pixel.x() + a22*texture_pixel.y();
                           float s_point_z = a31*texture_pixel.x() + a32*texture_pixel.y();
 
                           string sql = "insert into "+lines_table_name+" values('"+ConvertToString(pixel_count)+"','"+ConvertToString(current_pixel.x()) +"','"+ConvertToString(current_pixel.y())+"','"+ConvertToString(s_point_x)+"','"+ConvertToString(s_point_y)+"','"+ConvertToString(s_point_z)+"');";
-                          int p =mysql_query(mysql_add.connection,sql.c_str());//insert matrix into table
-                          pixel_count ++;
-                          find_map_matrix = true;
+                          mysql_query(mysql_add.connection,sql.c_str());//insert matrix into table
+                          break;
                         }
                       else {
                           temp_id ++;
@@ -220,13 +363,108 @@ void TriangleIndexVisitor::MapToSpatialCoordinate()
 
                 }
 
-//              find_map_matrix = false;
-              find_map_matrix = false;
               temp_id = 0;
             }
         }
     }
 
+}
+
+void TriangleIndexVisitor::MapToSpatialCoordinate2()
+{
+   while (temp_id < count)
+    {
+      string sql = "select t_point1_x,t_point1_y,t_point2_x,t_point2_y,t_point3_x,t_point3_y,a11,a12,a13,a21,a22,a23,a31,a32,a33 from "+matrixes_table_name+" where id ="+ConvertToString(temp_id)+";";
+      //visit matrix_info
+      if(mysql_query(mysql_add.connection,sql.c_str()))//successful queried
+          {
+            result = mysql_store_result(mysql_add.connection);
+            row = mysql_fetch_row(result);//it is managed as a two dimensions array;
+//            field = mysql_fetch_field(result);
+
+            for(int x_index = 0;x_index < BinaryImage.cols;x_index ++)
+              {
+                for(int y_index = 0;y_index < BinaryImage.rows;y_index ++)
+                  {
+
+
+                    if(BinaryImage.at<cv::Vec3b>(x_index,y_index)[0] == 255)//we also need to judge that if it locates in current region
+                      {
+                        // expand the target region;
+                        for(int x_range = 0 ; x_range <= 0;x_range ++)
+                          {
+                            for(int y_range = 0 ; y_range <= 0;y_range ++)
+                              {
+                                if(BinaryImage.at<cv::Vec3b>(x_index + x_range,y_index + y_range)[0] == 255)
+                                  {
+                                    TraverseBinaryImage(x_index + x_range,y_index + y_range,row);
+                                  }
+                              }
+                          }
+                      }
+
+                  }
+              }
+            temp_id ++;
+          }
+     }
+}
+
+void TriangleIndexVisitor::TraverseBinaryImage(int x_index, int y_index,MYSQL_ROW row)
+{
+    float t_point1_x = atof(row[0])*BinaryImage.cols - 1;
+    float t_point1_y = atof(row[1])*BinaryImage.rows - 1;
+    float t_point2_x = atof(row[2])*BinaryImage.cols - 1;
+    float t_point2_y = atof(row[3])*BinaryImage.rows - 1;
+    float t_point3_x = atof(row[4])*BinaryImage.cols - 1;
+    float t_point3_y = atof(row[5])*BinaryImage.rows - 1;
+
+    float a11 = atof(row[6]);
+    float a12 = atof(row[7]);
+  //            float a13 = atof(row[8]);
+    float a21 = atof(row[9]);
+    float a22 = atof(row[10]);
+  //            float a23 = atof(row[11]);
+    float a31 = atof(row[12]);
+    float a32 = atof(row[13]);
+  //            float a33 = atof(row[14]);
+
+    osg::Vec2 point1,point2,point3,vec1,vec2,vec3;
+    point1.x() = t_point1_x;
+    point1.y() = t_point1_y;
+    point2.x() = t_point2_x;
+    point2.y() = t_point2_y;
+    point3.x() = t_point3_x;
+    point3.y() = t_point3_y;
+
+    osg::Vec2 current_pixel;
+    current_pixel.x() = x_index;
+    current_pixel.y() = y_index;
+
+    vec1 = point1 - current_pixel;
+    vec1.normalize();//mormalize the vector
+    vec2 = point2 - current_pixel;
+    vec2.normalize();
+    vec3 = point3 - current_pixel;
+    vec3.normalize();
+
+    float value = abs(acosf((vec1) * (vec2)) + acosf((vec1) * (vec3)) + acosf((vec2) * (vec3)) - 2 * osg::PI) ;
+    if (abs(acosf((vec1) * (vec2)) + acosf((vec1) * (vec3)) + acosf((vec2) * (vec3)) - 2 * osg::PI) < 1e-2)//current_pixel is located in current triangle
+      {
+        osg::Vec2 texture_pixel;
+        texture_pixel.x() = (float)(x_index+1)/BinaryImage.cols;
+        texture_pixel.y() = (float)(y_index+1)/BinaryImage.rows;
+
+        float s_point_x = a11*texture_pixel.x() + a12*texture_pixel.y();
+        float s_point_y = a21*texture_pixel.x() + a22*texture_pixel.y();
+        float s_point_z = a31*texture_pixel.x() + a32*texture_pixel.y();
+
+        string sql = "insert into "+lines_table_name+" values('"+ConvertToString(pixel_count)+"','"+ConvertToString(current_pixel.x()) +"','"+ConvertToString(current_pixel.y())+"','"+ConvertToString(s_point_x)+"','"+ConvertToString(s_point_y)+"','"+ConvertToString(s_point_z)+"');";
+        int p = mysql_query(mysql_add.connection,sql.c_str());//insert matrix into table
+        cout<<"let me know it"<<endl;
+        pixel_count ++;
+        BinaryImage.at<cv::Vec3b>(x_index,y_index)[0] == 0;
+      }
 }
 
 string TriangleIndexVisitor::ConvertToString(float Num)
@@ -246,20 +484,63 @@ void TriangleIndexVisitor::ClearAllTheRecords()
   mysql_query(mysql_add.connection,sql_record_delete_lines_table_name.c_str());
 }
 
+void TriangleIndexVisitor::HoughLines()
+{
+//  cv::HoughLines(BinaryImage, lines, 1, CV_PI/180, 180);
+//  std::vector<cv::Vec2f>::const_iterator it= lines.begin();
+//  while (it!=lines.end())
+//  {
+//      float rho= (*it)[0]; // first element is distance rho
+//      float theta= (*it)[1]; // second element is angle theta
+//      if (theta < CV_PI/4. || theta > 3.*CV_PI/4.)// ~vertical line
+//      {
+//          // point of intersection of the line with first row
+//          cv::Point pt1(rho/cos(theta), 0);
+//          // point of intersection of the line with last row
+//          cv::Point pt2((rho - BinaryImage.rows * sin(theta))/cos(theta), BinaryImage.rows);
+//          // draw a white line
+//          cv::line( BinaryImage, pt1, pt2, cv::Scalar(255), 1);
+//      }
+//      else
+//      { // ~horizontal line
+//          // point of intersection of the
+//          // line with first column
+//          cv::Point pt1(0,rho/sin(theta));
+//          // point of intersection of the line with last column
+//          cv::Point pt2(BinaryImage.cols, (rho - BinaryImage.cols * cos(theta))/sin(theta));
+//          // draw a white line
+//          cv::line(BinaryImage, pt1, pt2, cv::Scalar(255), 1);
+//      }
+//      ++it;
+//  }
+
+  LineFinder finder;
+  // Set probabilistic Hough parameters
+  finder.setLineLengthAndGap(100, 20);
+  finder.setMinVote(80);
+  // Detect lines and draw them
+  lines = finder.findLines(BinaryImage);
+  finder.drawDetectedLines(GrayImage, cv::Scalar(255, 0, 0));
+  imshow("New_GrayImage",GrayImage);
+  cvWaitKey(0);
+
+
+}
+
 void FindGeometryVisitor::apply(osg::Group &group)
 {    
     for(int node_index = 0;node_index < group.getNumChildren();node_index ++)
       {
-        int s = group.getNumChildren();
+//        int s = group.getNumChildren();
         osg::Node* node = group.getChild(node_index);
         osg::Geode*  geode = node->asGeode();
         if (geode)
           {
             string file_name_table = GetTableName(geode);
             for(unsigned int i = 0; i<1;  i++ ) //
-    //        for(unsigned int i = 0; i<geode->getNumDrawables();  i++ ) //
+//            for(unsigned int i = 0; i<geode->getNumDrawables();  i++ ) //
             {
-    //            int p = geode->getNumDrawables();
+//                int p = geode->getNumDrawables();
                 osg::Geometry* geo = dynamic_cast<osg::Geometry*>(geode->getDrawable(i));
                 osg::Array* vercoord = geo->getVertexArray();
                 osg::Array* texcoord = geo->getTexCoordArray(i);
@@ -303,7 +584,7 @@ void FindGeometryVisitor::getImage(osg::Geode *geode)
                 cout<<"FileName:"<<texImg->getFileName()<<endl;
                 triIndex.texImg_ = texImg;
                 triIndex.CreateBinaryImage();
-                free(texImg);
+//                free(texImg);
             }
         }
 
@@ -423,5 +704,42 @@ void  MatrixInverse::getAStart(float arcs[3][3],int n,float ans[3][3])
                 ans[j][i] = - ans[j][i];
             }
         }
+    }
+}
+
+void LineFinder::setAccResolution(double dRho, double dTheta)
+{
+    deltaRho= dRho;
+    deltaTheta= dTheta;
+}
+
+void LineFinder::setMinVote(int minv)
+{
+    minVote= minv;
+}
+
+void LineFinder::setLineLengthAndGap(double length, double gap)
+{
+    minLength= length;
+    maxGap= gap;
+}
+
+std::vector<cv::Vec4i> LineFinder::findLines(cv::Mat &binary)
+{
+    lines.clear();
+    cv::HoughLinesP(binary, lines, deltaRho, deltaTheta, minVote, minLength, maxGap);
+    return lines;
+}
+
+void LineFinder::drawDetectedLines(cv::Mat &image, cv::Scalar color)
+{
+//   Draw the lines
+    std::vector<cv::Vec4i>::const_iterator it2 = lines.begin();
+    while (it2 != lines.end())
+    {
+        cv::Point pt1((*it2)[0],(*it2)[1]);
+        cv::Point pt2((*it2)[2],(*it2)[3]);
+        cv::line( image, pt1, pt2, color, 2);
+        ++it2;
     }
 }

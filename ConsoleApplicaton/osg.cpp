@@ -28,7 +28,9 @@ void OSG::run()
         {
             osg::ref_ptr<osg::Node> node = osgDB::readNodeFile(searchingTree[index]->file_path);
             group->addChild(node.get());
-//            break;
+
+
+            break;
             if (index >= 600)
               {
                 break;
