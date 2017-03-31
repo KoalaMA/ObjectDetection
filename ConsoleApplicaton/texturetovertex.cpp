@@ -116,9 +116,8 @@ void TriangleIndexVisitor::CreateBinaryImage()
         }
     }
 
-
   cvtColor(TextImage,GrayImage,CV_RGB2GRAY);
-  Canny(GrayImage,BinaryImage,500,200,3,true);
+  Canny(GrayImage,BinaryImage,300,200,3,true);
 
   FilterPixels(GrayImage);
   imshow("BinaryImage",BinaryImage);

@@ -22,19 +22,20 @@ void OSG::run()
     DocumentManage* documentManage = new DocumentManage;
     std::vector<TreeNode*> searchingTree;
     searchingTree = documentManage->OnFileFolderOpen();
+    int temp_count = 0;
     for(int index = 0;index < int(searchingTree.size());index++)
     {
         if(searchingTree[index]->loadable)
         {
             osg::ref_ptr<osg::Node> node = osgDB::readNodeFile(searchingTree[index]->file_path);
             group->addChild(node.get());
-
-
+            temp_count++;
 //            break;
-            if (index >= 600)
+            if (temp_count >= 10)
               {
                 break;
               }
+
         }
     }
 
