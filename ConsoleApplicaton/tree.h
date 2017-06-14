@@ -15,8 +15,6 @@ struct FileNameInformation;//定义一个结构体原形
 class Tree;      //定义一个类原形
 class Iterator; //定义一个类原形
 
-
-
 struct FileNameInformation //文件名信息
 {
 //	char* filename;
@@ -28,7 +26,6 @@ struct FileNameInformation //文件名信息
 	bool loadable;
 };
 
-
 struct TreeNode
 {
    char* file_path;//节点路径
@@ -39,9 +36,6 @@ struct TreeNode
    bool loadable;//选择是否加载
    FileNameInformation* file_name_info;//文件信息
 };
-
-
-
 
 class Tree
 {

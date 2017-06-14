@@ -19,8 +19,9 @@ using namespace sql;
 
 #define DATAMANAGEMENT_H
 
-#endif // DATAMANAGEMENT_H
 
+class CMyDBAdd;
+class CMyDBQuery;
 
 
 
@@ -28,11 +29,11 @@ class CMyDBAdd
 {
 public:
     CMyDBAdd();
+    ~CMyDBAdd();
     bool initDB(string server_host , string user, string password, string db_name);
     bool executeSQL(string sql_str);
-    bool insertRecord();
     bool create_table(string table_str_sql);
-    ~CMyDBAdd();
+
 public:
     MYSQL *connection;
 private:
@@ -55,3 +56,5 @@ public:
 
   ResultSet *result_set;
 };
+
+#endif // DATAMANAGEMENT_H

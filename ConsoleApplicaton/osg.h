@@ -28,8 +28,28 @@
 #include <vector>
 
 #include <iostream>
+#include <drawpoints.h>
+#include <datamanagement.h>
+//#include <rebuildtextimage.h>
+
 
 using namespace std;
+
+struct PIXEL_INFO
+{
+  PIXEL_INFO();
+  ~PIXEL_INFO();
+public:
+  int pixel_count;
+  float spatial_x;
+  float spatial_y;
+  float spatial_z;
+  int R;
+  int G;
+  int B;
+
+};
+
 
 class OSG
 {
@@ -39,11 +59,19 @@ public:
 
 public:
   void run();
+
   void GetAttrInfo(osg::ref_ptr<osgViewer::Viewer> viewer);
+
+  osg::ref_ptr<osg::Geode> DrawSpatialPoints();
+
+  osg::ref_ptr<osg::Geode> DrawSpatialTriangles();
+
+  void ReadModelNames(CMyDBAdd &database, vector<string> & _model_name);
+
+  osg::ref_ptr<osg::Geode> CreateGemotry(CMyDBAdd &database, vector<string> & _model_name);
 
 public:
   int element_count;
-
+//  osg::ref_ptr<osg::Geode> geode;
 };
-
 

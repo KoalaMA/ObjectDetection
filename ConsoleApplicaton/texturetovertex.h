@@ -25,11 +25,37 @@
 #include <osgGA/TerrainManipulator>
 
 #include <datamanagement.h>
-#include <drawsides.h>
-#include <opencv2/opencv.hpp>
 #include <vector>
 #include <iostream>
+
+#include <opencv2/opencv.hpp>
+
+
+using namespace  cv;
 using namespace std;
+
+struct PIXELINFO
+{
+  PIXELINFO();
+  ~PIXELINFO();
+public:
+  int pixel_count;
+  float texture_x;
+  float texture_y;
+  float spatial_x;
+  float spatial_y;
+  float spatial_z;
+  int pixel_value;
+};
+
+struct Triangle{
+  int p1_row;
+  int p1_col;
+  int p2_row;
+  int p2_col;
+  int p3_row;
+  int p3_col;
+};
 
 class IndexToTextureCoord
 {
@@ -38,15 +64,15 @@ public:
     float getColuTexCoord(int row_index,int T); //row为像元行号，T为总行数，返回纹理y坐标
 };
 
-class MatrixInverse   //计算给定矩阵的逆矩阵
+class MatrixComputation   //计算给定矩阵的逆矩阵
 {
 public:
     bool GetMatrixInverse(float src[3][3],int n,float des[3][3]);   //得到给定矩阵src的逆矩阵保存到des中
+    bool MatrixMutipule(float matrix_s[3][3],float matrix_t_inversed[3][3],float matrix_res[3][3]);
     float getA(float arcs[3][3], int n);  //按第一行展开计算|A|
     void getAStart(float arcs[3][3],int n,float ans[3][3]);   //计算每一行每一列的每个元素所对应的余子式，组成A*
 
 };
-
 //遍历三角面片获取顶点索引
 class TriangleIndexVisitor
 {
@@ -54,38 +80,57 @@ public:
     int count;
     int temp_id;
     int pixel_count;
+    int triangle_count;
+    int model_count;
 
     string matrixes_table_name;
-    string lines_table_name;
+    string triangles_table_name;
+//    string model_table_name;
+    string pixels_table_name;
+    string sides_table_name;
+    string binary_file_path;
+    string binary_file_name;
 
 //    cv::Mat BinaryImage;
     //vector<int> aryindex;//三角面片顶点索引数组
+    osg::Vec3f BaseVector;
     osg::Array* arytexcoord;
     osg::Array* aryvercoord;
     osg::Image* texImg_;
     IndexToTextureCoord textureCoord;
     cv::Mat GrayImage;
+    cv::Mat ColorfulImage;
+
     cv::Mat BinaryImage;
-    std::vector<osg::Vec3> point_set;
+//    std::vector<osg::Vec3> point_set;
+
+//    RebuildTextImage* rebuild_textImage;
 
 //    MYSQL_FIELD *field;
     MYSQL_RES* result;
     MYSQL_ROW row;
 
-    MatrixInverse* matrixInverse;
+    MatrixComputation* matrixComputation;
 
-    float raw_matrix[3][3],inversed_matrix[3][3];
+    float text_matrix[3][3],inversed_text_matrix[3][3],spatial_matrix[3][3],map_matrix[3][3];
 
     CMyDBAdd mysql_add;
 
-    SidesManage* sideManage;
-
     std::vector<cv::Vec4i> lines;
+
+    std::vector<osg::Vec3f> point_set;
+
+    std::vector<PIXELINFO*> Graph_info;
+
+    std::vector<Triangle*> Triangles;
+
 
 public:
     TriangleIndexVisitor();
 
     ~TriangleIndexVisitor();
+
+    void DrawTriangles();
 
     void CreateTable();
 
@@ -95,13 +140,21 @@ public:
 
     void MapToSpatialCoordinate();
 
-    void MapToSpatialCoordinate2();
-
     void TraverseBinaryImage(int x_index, int y_index, MYSQL_ROW row);
+
+    float EvaluatePointToLine(int x, int y, int x1, int y1, int x2, int y2);
+
+    bool IsPointInTriangle(int x, int y, int x1, int y1, int x2, int y2, int x3, int y3);    
+
+    void triangleClassification(const int index1, const int index2, const int index3);
+
+    bool JudgedByNormalVector(osg::Vec3f point1,osg::Vec3f point2,osg::Vec3f point3);
 
     void MapMatrix(const int index1, const int index2, const int index3);
 
     void CreateBinaryImage();
+
+    void DrawSides();
 
     void FilterPixels(cv::Mat GrayImage);
 
@@ -111,11 +164,11 @@ public:
 
     void HoughLines();
 
+    void WriteIntoBinaryFile();
+
 
 
 };
-
-
 
 class FindGeometryVisitor:public osg::NodeVisitor
 {
@@ -163,3 +216,4 @@ public:
     // Draw the detected lines on an image
     void drawDetectedLines(cv::Mat &image, cv::Scalar color = cv::Scalar(255, 255, 255));
 };
+

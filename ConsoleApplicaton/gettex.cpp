@@ -274,5 +274,3 @@ bool EventHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 
     return false;
 }
-
-

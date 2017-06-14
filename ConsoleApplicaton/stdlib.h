@@ -27,7 +27,7 @@
  */
 
 #if !defined __cplusplus || defined _GLIBCXX_INCLUDE_NEXT_C_HEADERS
-# include_next <stdlib.h>
+# include <stdlib.h>
 #else
 
 #ifndef _GLIBCXX_STDLIB_H
